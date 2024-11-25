@@ -1,0 +1,38 @@
+name: Agent Capability Tests Int
+
+on: 
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  test-host-outbound:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@int-sh
+        with:
+          egress-policy: audit
+          allowed-endpoints: >
+            github.com:443
+            goreleaser.com:443
+            
+      
+      - run: resolvectl status
+      
+     
+      - run: cat /run/systemd/resolve/resolv.conf
+      - run: cat /etc/resolv.conf
+      
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - run: curl www.microsoft.com
+      - name: Run outbound calls from host
+        run: |
+          start_time=$(date +%s)
+          end_time=$((start_time + 90))  # 5 minutes = 300 seconds
+          
+          while [ $(date +%s) -lt $end_time ]; do
+            curl -I https://www.google.com
+            curl -I https://goreleaser.com
+            sleep 10  # wait 10 seconds between calls
+          done
